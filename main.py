@@ -136,10 +136,10 @@ async def generate_response(text: str, chat_id: str) -> str:
     response_message = response['message']
     return response_message
 
-async def process_new_messages(avito_client: AvitoClient, user_id: int):
+async def process_new_messages(avito_client: AvitoClient, user_id: int) -> None:
     """Обработка новых сообщений"""
     try:
-        # Получаем список чатов
+        # Получаем список непрочитанных чатов
         chats_response = await avito_client.get_chats(user_id)
         chats = chats_response.get('chats', [])
         
@@ -179,7 +179,8 @@ async def process_new_messages(avito_client: AvitoClient, user_id: int):
                 
             # Генерация ответа
             response = await generate_response(full_text, chat_id)
-            
+            print(full_text)
+            print(response)
             # Отправка ответа
             try:
                 await avito_client.send_message(user_id, chat_id, response)
@@ -201,7 +202,7 @@ async def polling_loop():
     """Основной цикл опроса новых сообщений"""
     client_id = os.getenv("AVITO_CLIENT_ID")
     client_secret = os.getenv("AVITO_CLIENT_SECRET")
-    user_id = 382858853  #os.getenv("AVITO_USER_ID")  # ID пользователя в Авито
+    user_id = os.getenv("AVITO_USER_ID")  # ID пользователя в Авито
     
     if not all([client_id, client_secret, user_id]):
         raise ValueError("Не все переменные окружения установлены")
