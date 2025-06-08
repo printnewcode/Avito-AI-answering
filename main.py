@@ -163,6 +163,8 @@ async def process_new_messages(avito_client: AvitoClient, user_id: int):
             
             logger.info(f"Чат {chat_id}: {len(messages)} сообщений")
             
+            full_text = str()  # Переменная для сбора текста всех непрочитанных сообщений
+
             for message in messages:
                 # Обрабатываем только входящие непрочитанные сообщения
                 if message.get('direction') != 'in' or message.get('is_read'):
@@ -172,24 +174,25 @@ async def process_new_messages(avito_client: AvitoClient, user_id: int):
                 if not text:
                     continue
                 
+                full_text += f"{text}\n"
                 logger.info(f"Новое сообщение в чате {chat_id}: {text[:50]}...")
                 
-                # Генерация ответа
-                response = await generate_response(text, chat_id)
-                
-                # Отправка ответа
-                try:
-                    await avito_client.send_message(user_id, chat_id, response)
-                    logger.info(f"Ответ отправлен в чат {chat_id}")
-                except Exception as e:
-                    logger.error(f"Ошибка при отправке сообщения: {e}")
-                
-                # Отмечаем чат как прочитанный
-                try:
-                    await avito_client.mark_chat_as_read(user_id, chat_id)
-                    logger.info(f"Чат {chat_id} отмечен как прочитанный")
-                except Exception as e:
-                    logger.error(f"Ошибка при отметке чата как прочитанного: {e}")
+            # Генерация ответа
+            response = await generate_response(full_text, chat_id)
+            
+            # Отправка ответа
+            try:
+                await avito_client.send_message(user_id, chat_id, response)
+                logger.info(f"Ответ отправлен в чат {chat_id}")
+            except Exception as e:
+                logger.error(f"Ошибка при отправке сообщения: {e}")
+            
+            # Отмечаем чат как прочитанный
+            try:
+                await avito_client.mark_chat_as_read(user_id, chat_id)
+                logger.info(f"Чат {chat_id} отмечен как прочитанный")
+            except Exception as e:
+                logger.error(f"Ошибка при отметке чата как прочитанного: {e}")
     
     except Exception as e:
         logger.error(f"Ошибка при обработке сообщений: {e}")
@@ -198,7 +201,7 @@ async def polling_loop():
     """Основной цикл опроса новых сообщений"""
     client_id = os.getenv("AVITO_CLIENT_ID")
     client_secret = os.getenv("AVITO_CLIENT_SECRET")
-    user_id = os.getenv("AVITO_USER_ID")  # ID пользователя в Авито
+    user_id = 382858853  #os.getenv("AVITO_USER_ID")  # ID пользователя в Авито
     
     if not all([client_id, client_secret, user_id]):
         raise ValueError("Не все переменные окружения установлены")
